@@ -4,12 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { useMyContext } from "../../context/appContext";
 export const Login = () => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-  const {setUserDetails} = useMyContext();
+  const { setUserDetails } = useMyContext();
   const [loginCred, setLoginCred] = useState({
     email: "",
     password: "",
   });
- const navigate = useNavigate();
+  const navigate = useNavigate();
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
@@ -36,16 +36,15 @@ export const Login = () => {
     }
     // console.log(`${backendUrl}/api/user/login`);
     try {
-       const response = await axios.post(`${backendUrl}/api/user/login`, {
-         email: loginCred.email,password: loginCred.password,
-       });
+      const response = await axios.post(`${backendUrl}/api/user/login`, {
+        email: loginCred.email,
+        password: loginCred.password,
+      });
       const { token, user } = response.data;
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
       setUserDetails(user);
       navigate("/dashboard");
-
-
     } catch (err) {
       if (err.response && err.response.data && err.response.data.message) {
         setError(err.response.data.message);
@@ -53,7 +52,6 @@ export const Login = () => {
         setError("Something went wrong. Please try again.");
       }
     }
-
   };
 
   return (
@@ -93,11 +91,9 @@ export const Login = () => {
           />
         </div>
 
-         <div className="h-1">{error && (
-          <p className="text-red-500 text-sm">
-            {error}
-          </p>
-        )}</div>
+        <div className="h-1">
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+        </div>
 
         <button
           type="submit"

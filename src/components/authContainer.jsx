@@ -4,7 +4,6 @@ import { useMyContext } from "../../context/appContext";
 
 export const AuthModal = () => {
   const { activeForm, setActiveForm } = useMyContext();
-  console.log("Active Form:", activeForm);
   return (
     <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-md px-4">
       <div className="w-full max-w-xs md:max-w-sm bg-white shadow-lg rounded-xl p-2">

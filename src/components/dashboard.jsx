@@ -2,8 +2,11 @@ import React, { useState, useEffect } from "react";
 import { FiDownload, FiUser, FiMail } from "react-icons/fi";
 import { useMyContext } from "../../context/appContext";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 const UserDashboard = () => {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const { userDetails, setUserDetails } = useMyContext();
+  const id = userDetails ? userDetails.id : null;
   const navigate = useNavigate();
   const [userData, setUserData] = useState({
     name: localStorage.getItem("user")
@@ -18,12 +21,13 @@ const UserDashboard = () => {
 
   useEffect(() => {
     fetchUserData();
-    fetchFormSubmissions();
-  }, []);
+    if (id) {
+      fetchFormSubmissions();
+    }
+  }, [id]);
 
   const fetchUserData = async () => {
     try {
-      //  {implementation yet to be done}
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
@@ -31,38 +35,60 @@ const UserDashboard = () => {
 
   const fetchFormSubmissions = async () => {
     try {
-      // {implementaton yet to be doen}
-      // dummy data
-      setFormSubmissions([
-        {
-          id: 1,
-          formName: "Application Form - Basic Information",
-          submissionDate: "2024-01-15",
+      const response = await axios.get(`${backendUrl}/api/form/user/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        {
-          id: 2,
-          formName: "Qualification Details Form",
-          submissionDate: "2024-01-20",
-        },
-        {
-          id: 3,
-          formName: "Address Verification Form",
-          submissionDate: "2024-01-25",
-        },
-      ]);
+      });
+      const mappedForms = response.data.forms.map((form, index) => ({
+        id: form._id,
+        formName: `Form ${index + 1}`,
+        submissionDate: new Date(
+          form.submissionDate || form.createdAt
+        ).toLocaleDateString("en-CA"),
+      }));
+
+      setFormSubmissions(mappedForms);
     } catch (error) {
       console.error("Error fetching form submissions:", error);
+      if (error.response?.status === 404) {
+        setFormSubmissions([]);
+      }
     }
   };
 
   const handleDownloadPDF = async (formId, formName) => {
     try {
-      //  implemnentation yet to be done
-      alert(`Downloading: ${formName}.pdf`);
-      console.log(`Download requested for form ID: ${formId}`);
+      const response = await axios.get(`${backendUrl}/api/form/${formId}/pdf`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        responseType: "blob",
+      });
+
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `${formName}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      console.log(`PDF downloaded successfully: ${formName}.pdf`);
     } catch (error) {
       console.error("Error downloading PDF:", error);
-      alert("Failed to download PDF. Please try again.");
+
+      if (error.response?.status === 404) {
+        alert("Form not found. Please try again.");
+      } else if (error.response?.status === 401) {
+        alert("Unauthorized. Please login again.");
+      } else {
+        alert("Failed to download PDF. Please try again.");
+      }
     }
   };
 
@@ -142,7 +168,7 @@ const UserDashboard = () => {
                         onClick={() =>
                           handleDownloadPDF(form.id, form.formName)
                         }
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition hover:cursor-pointer"
                       >
                         <FiDownload className="w-4 h-4" />
                         Download PDF

@@ -5,16 +5,16 @@ import { useNavigate } from "react-router-dom";
 import { useMyContext } from "../../context/appContext";
 export const NavBar = () => {
   const navigate = useNavigate();
-  const {setModelOpen, userDetails } = useMyContext();
+  const { setModelOpen, userDetails } = useMyContext();
   const [isDark, setIsDark] = useState(false);
 
   const toggleTheme = () => {
     setIsDark(!isDark);
   };
- const HandleHome = () => {
+  const HandleHome = () => {
     setModelOpen(false);
     navigate("/");
-  }
+  };
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 w-full bg-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -32,9 +32,13 @@ export const NavBar = () => {
             </button>
           </div>
           <div className="flex flex-row gap-4 items-center justify-center">
-            {userDetails && <div onClick={() => navigate("/dashboard")}>
-              <p className="m-0 font-medium text-blue-500 hover:cursor-pointer">Dashboard</p>
-            </div>}
+            {userDetails && (
+              <div onClick={() => navigate("/dashboard")}>
+                <p className="m-0 font-medium text-blue-500 hover:cursor-pointer">
+                  Dashboard
+                </p>
+              </div>
+            )}
             <button
               onClick={toggleTheme}
               className={`${

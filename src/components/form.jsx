@@ -1,12 +1,18 @@
 import React, { useState } from "react";
 import { formSchema } from "../assets/formSchema/form.js";
 import axios from "axios";
+import { useMyContext } from "../../context/appContext.jsx";
+import { useNavigate } from "react-router-dom";
 const encodeFormData = (data) => {
   const jsonStr = JSON.stringify(data);
   return btoa(unescape(encodeURIComponent(jsonStr)));
 };
 
 const DynamicForm = () => {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const { userDetails } = useMyContext();
+  const id = userDetails ? userDetails.id : null;
+  const navigate = useNavigate();
   const [userData, setUserData] = useState({});
   const [validationErrors, setValidationErrors] = useState({});
   const [imagePreview, setImagePreview] = useState(null);
@@ -75,35 +81,61 @@ const DynamicForm = () => {
     return Object.keys(errorList).length === 0;
   };
 
-
-const submitFormData = async () => {
-  try {
-    if (!checkFormValidity()) return;
-
-    const encodedData = encodeFormData(userData);
-
-    // Send encoded data to backend
-    const response = await axios.post(
-      "http://localhost:3000/api/form/submit",
-      {
-        encodedData: encodedData, 
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+  const submitFormData = async () => {
+    try {
+      if (!id) {
+        alert("Please login to submit the form");
+        return;
       }
-    );
 
-    console.log("Server Response:", response.data);
-    alert("Form submitted successfully!");
-  } catch (error) {
-    console.error("Error submitting form:", error);
-    alert("Failed to submit form!");
-  }
-};
+      if (!checkFormValidity()) {
+        alert("Please fill all required fields correctly");
+        return;
+      }
+      const formDataWithUser = {
+        ...userData,
+        userId: id,
+      };
 
+      const encodedData = encodeFormData(formDataWithUser);
+      const response = await axios.post(
+        `${backendUrl}/api/form/submit`,
+        {
+          encodedData: encodedData,
+          userId: id,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.status === 201 && response.data) {
+        alert("Form submitted successfully!");
+        setUserData({});
+        setImagePreview(null);
+        setValidationErrors({});
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 500);
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+
+      if (error.response) {
+        console.error("Server error:", error.response.data);
+        console.error(
+          `Failed to submit form: ${error.response.data.msg || "Server error"}`
+        );
+      } else if (error.request) {
+        console.error("No response from server. Please check your connection.");
+      } else {
+        console.error("Failed to submit form!");
+      }
+    }
+  };
 
   const getInputStyle = (fieldName) => {
     const baseStyle =
@@ -142,7 +174,6 @@ const submitFormData = async () => {
               value={userData[field.id] || ""}
               onChange={(e) => updateField(field.id, e.target.value)}
               className={getInputStyle(field.id)}
-              
             >
               <option value="">-- Select --</option>
               {field.options.map((option) => (
@@ -337,7 +368,7 @@ const submitFormData = async () => {
         <div className="flex justify-center mt-6">
           <button
             onClick={submitFormData}
-            className="px-8 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors shadow-md"
+            className="px-8 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors shadow-md hover:cursor-pointer"
           >
             Submit Application
           </button>

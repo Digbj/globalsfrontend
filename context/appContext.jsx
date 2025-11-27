@@ -12,7 +12,7 @@ export const MyAppContext = ({ children }) => {
         setUserDetails(JSON.parse(storedUser));
       }
     }, []); 
-console.log(userDetails)
+// console.log(userDetails)
   return (
     <AppContext.Provider
       value={{
